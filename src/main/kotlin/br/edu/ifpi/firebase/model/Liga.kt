@@ -4,7 +4,7 @@ data class Liga(
         val codigo: String? = null,
         val nome: String = "",
         val criador: Usuario? = null,
-        val modalidades: List<Modalidade> = mutableListOf(),
+        val modalidades: List<String> = mutableListOf(),
         val equipes: List<Equipe> = mutableListOf()
 ){
     fun getLigaNameId(): Liga{
