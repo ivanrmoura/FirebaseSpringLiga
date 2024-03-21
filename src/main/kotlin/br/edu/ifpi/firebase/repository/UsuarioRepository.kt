@@ -5,6 +5,8 @@ import com.google.cloud.firestore.CollectionReference
 import com.google.cloud.firestore.Firestore
 import com.google.cloud.firestore.SetOptions
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.crypto.bcrypt.BCrypt
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Repository
 import java.util.*
 
@@ -14,12 +16,17 @@ class UsuarioRepository {
     @Autowired
     private lateinit var firestorage: Firestore
 
+    @Autowired
+    private lateinit var bCrypt: BCryptPasswordEncoder
+
     private fun getUserCollection(): CollectionReference = firestorage
             .collection("usuarios")
 
+    // Criar ou atualizar usuario
     fun createOrUpdateUser(user: Usuario): String{
         if (user.codigo == null || user.codigo.equals("")){
             user.codigo = UUID.randomUUID().toString()
+            user.senha = bCrypt.encode(user.senha)
         }
         val collectionApiFuture = getUserCollection()
                 .document(user.codigo.toString())
@@ -27,6 +34,7 @@ class UsuarioRepository {
         return collectionApiFuture.get().updateTime.toString()
     }
 
+    // buscar usuario por ID
     fun getUser(codigo: String): Usuario?{
         val documentRef = getUserCollection().document(codigo)
         val future = documentRef.get()
@@ -39,6 +47,7 @@ class UsuarioRepository {
     }
 
 
+    // buscar todos usuarios
     fun buscarTodosUsuarios():List<Usuario>{
         val usuariosList = mutableListOf<Usuario>()
         val future = getUserCollection().get()
@@ -49,35 +58,44 @@ class UsuarioRepository {
         return usuariosList
     }
 
+    // deletar usuario
     fun deleteUser(codigo: String): String{
         val result = getUserCollection().document(codigo).delete()
         return "Documento ${codigo} deletado com sucesso!"
     }
 
 
+    //Buscar usuario por email
+    fun findUserByEmail(email: String): Usuario?{
+        val query = getUserCollection()
+                .whereEqualTo("email", email)
+                .get()
+        val document = query.get().documents
+        if (document.size > 0) {
+           return document[0].toObject(Usuario::class.java)
+        }else{
+            return null
+        }
+    }
 
-    fun buscarPorModalidade(modalidade: String): List<Usuario>{
+
+    // buscar usuario por palavra chave
+    fun findUserLikeName(searchKey: String): List<Usuario>?{
         val users = mutableListOf<Usuario>()
-
-        /*val queryNomeEmail = getUserCollection()
-                .whereEqualTo("nome", "Ivan Rodrigues")
-                .whereEqualTo("email", "ivan@gmail.com")
+        val query = getUserCollection()
+                .whereGreaterThanOrEqualTo("nome", searchKey)
+                .whereLessThan("nome", searchKey + 'z')
                 .get()
-        */
-
-        val t = getUserCollection()
-                .whereIn("codigo", listOf("" +
-                        "d733066c-6173-4a44-983c-52f60b88a336",
-                        "d8437ce2-f8be-4b5d-9c11-569871a63ebd"))
-                .get()
-
-        val documents = t.get().documents
-        for (doc in documents){
-            users.add(doc.toObject(Usuario::class.java))
+        val documents = query.get().documents
+        if (documents.size > 0) {
+            for (doc in documents){
+                users.add(doc.toObject(Usuario::class.java))
+            }
+        }else{
+            return null
         }
         return users
     }
-
 
 
 }

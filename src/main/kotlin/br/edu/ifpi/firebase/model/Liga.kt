@@ -1,16 +1,13 @@
 package br.edu.ifpi.firebase.model
 
+import java.time.LocalDate
+import java.time.LocalDateTime
+
 data class Liga(
-        val codigo: String? = null,
+        var codigoLiga: String? = null,
+        val dataCriacao: LocalDate = LocalDate.now(),
         val nome: String = "",
+        val codigoCriador: String? = null,
         val criador: Usuario? = null,
-        val modalidades: List<String> = mutableListOf(),
-        val equipes: List<Equipe> = mutableListOf()
-){
-    fun getLigaNameId(): Liga{
-        return Liga(
-                codigo = this.codigo,
-                nome = this.nome
-                )
-    }
-}
+        val modalidades: MutableList<String> = mutableListOf()
+)
